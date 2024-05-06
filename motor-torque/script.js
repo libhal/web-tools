@@ -3,23 +3,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const base64_url_params = new URLSearchParams(query_string);
   let url_params = new URLSearchParams(query_string);
 
-  const title_description_tag = document.querySelector('meta[name="title"]');
   const share_link = document.getElementById("share-link");
+  const og_title = document.querySelector('meta[property="og:title"]');
+  const og_description = document.querySelector(
+    'meta[property="og:description"]'
+  );
+  const og_image = document.querySelector('meta[property="og:image"]');
+  const meta_description_tag = document.querySelector(
+    'meta[name="description"]'
+  );
 
   if (base64_url_params.has("data")) {
     url_params = new URLSearchParams(atob(base64_url_params.get("data")));
-    // Get the meta description tag
-    const meta_description_tag = document.querySelector(
-      'meta[name="description"]'
-    );
 
-    // Set the new content for the meta description tag
-    meta_description_tag.setAttribute(
-      "content",
-      `Torque curve for ${url_params.get("motor_name")}.
-       Link to motor datasheet or purchase site can be found here:
-       ${url_params.get("motor_url")}.`
-    );
+    const description = `Torque curve for ${url_params.get("motor_name")}.
+     Link to motor datasheet or purchase site can be found here:
+     ${url_params.get("motor_url")}.`;
+
+    meta_description_tag.setAttribute("content", description);
+    og_description.setAttribute("content", description);
   }
 
   let timeout_handle = null;
@@ -38,43 +40,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   };
 
-  function initialize_input(id_name) {
+  function setup_input_fields(id_name) {
     elem = document.getElementById(id_name);
-    if (id_name === "motor_name") {
+    if (
+      id_name === "motor_name" ||
+      id_name === "motor_url" ||
+      id_name === "image_link"
+    ) {
       elem.addEventListener("input", (e) => {
         url_params.set(id_name, e.currentTarget.value);
-        share_link.value =
-          window.location.href.split("?")[0] +
-          "?data=" +
-          btoa(url_params.toString());
-        document.title = `${url_params.get("motor_name")} Torque Curve`;
+        update_meta_data();
         update();
       });
     } else {
       elem.addEventListener("input", (e) => {
         url_params.set(id_name, e.currentTarget.value);
-        share_link.value =
-          window.location.href.split("?")[0] +
-          "?data=" +
-          btoa(url_params.toString());
+        update_share_link();
         update();
       });
     }
     if (url_params.has(id_name)) {
+      console.log(id_name);
       elem.value = url_params.get(id_name);
     }
     return elem;
   }
 
-  const rated_torque_input = initialize_input("rated_torque");
-  const no_load_speed_input = initialize_input("no_load_speed");
-  const rated_speed_input = initialize_input("rated_speed");
-  const no_load_current_input = initialize_input("no_load_current");
-  const rated_current_input = initialize_input("rated_current");
-  const current_limit_input = initialize_input("current_limit");
-  const torque_chart_canvas = initialize_input("torque_chart");
-  const motor_name = initialize_input("motor_name");
-  const motor_url = initialize_input("motor_url");
+  const rated_torque_input = setup_input_fields("rated_torque");
+  const no_load_speed_input = setup_input_fields("no_load_speed");
+  const rated_speed_input = setup_input_fields("rated_speed");
+  const no_load_current_input = setup_input_fields("no_load_current");
+  const rated_current_input = setup_input_fields("rated_current");
+  const current_limit_input = setup_input_fields("current_limit");
+  const torque_chart_canvas = setup_input_fields("torque_chart");
+  setup_input_fields("motor_name");
+  setup_input_fields("motor_url");
+  setup_input_fields("image_link");
 
   let torque_chart = new Chart(torque_chart_canvas, {
     type: "line",
@@ -229,9 +230,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  share_link.value =
-    window.location.href.split("?")[0] + "?data=" + btoa(url_params.toString());
-  document.title = `${url_params.get("motor_name")} Torque Curve`;
+  function update_share_link() {
+    share_link.value =
+      window.location.href.split("?")[0] +
+      "?data=" +
+      btoa(url_params.toString());
+  }
 
+  function update_meta_data() {
+    const title = `${url_params.get("motor_name")} Torque Curve`;
+    const description = `Torque curve for ${url_params.get("motor_name")}.
+     Link to motor datasheet or purchase site can be found here:
+     ${url_params.get("motor_url")}.`;
+
+    document.title = title;
+    og_title.setAttribute("content", title);
+    meta_description_tag.setAttribute("content", description);
+    og_description.setAttribute("content", description);
+    og_image.setAttribute("content", url_params.get("image_url"));
+
+    update_share_link();
+  }
+
+  update_meta_data();
   update(); // Initial update
 });
