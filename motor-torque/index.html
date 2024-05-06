@@ -11,7 +11,14 @@
       name="description"
       content="Generate motor torque curves with a few inputs"
     />
+
     <title>Motor Torque Curve Calculator</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Motor Torque Curve Calculator" />
+    <meta property="og:description" content="Site Description" />
+    <meta property="og:image" content="" />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <!-- <link rel="icon" type="image/x-icon" href="assets/favicon.ico" /> -->
     <script src="../third_party/chart.js"></script>
     <link
@@ -20,7 +27,7 @@
     />
   </head>
   <body>
-    <!-- Responsive navbar-->
+    <!-- navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark vh-10">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">Motor Size Calculator</a>
@@ -51,6 +58,24 @@
               placeholder="Motor Website Link"
               style="margin-right: 5px; width: 50ch"
             />
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#image-modal"
+              style="margin-right: 5px"
+            >
+              Add Image Link
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-toggle="modal"
+              data-bs-target="#help-modal"
+              style="margin-right: 5px"
+            >
+              Help
+            </button>
             <button
               type="button"
               class="btn btn-success"
@@ -187,6 +212,134 @@
               >
                 📋
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" tabindex="-1" id="image-modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Insert Embed Image Link</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="image_link" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" tabindex="-1" id="help-modal">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Application Help Documentation</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="input-group mb-6">
+              <h2>What is this tool?</h2>
+              <p>
+                This tool enables users to extrapolate a torque curve for a
+                motor given some information about the motor. A torque curve
+                provides a relationship between the counter torque applied to
+                the output shaft of a motor and its RPM (revolutions per
+                minute). A good torque curve will also provide a graph of
+                current vs torque as well to give the reader an understanding of
+                how much current will be drawn from the motor at different
+                torque amounts.
+              </p>
+              <h2>How to use the tool</h2>
+              <p>
+                Many motors out there will not have a spec sheet containing a
+                torque curve. But you can derive the whole torque curve for a
+                motor provided you have the following bits of information:
+              </p>
+              <ul>
+                <li>
+                  <b>No load speed</b>: RPM of the motor when no load is applied
+                  to the motor shaft. This should normally be available for any
+                  motor you find.
+                </li>
+                <li>
+                  <b>No load current</b>: Current draw of the motor when no load
+                  is applied to the motor shaft. This may not be available for
+                  your motor and if so, it is usually fine to choose 0 amps as
+                  your input for this.
+                </li>
+                <li>
+                  <b>Rated Speed</b>: RPM of the motor at a specified rated
+                  torque. Motor manufactures generally give you this info so you
+                  can see if the motor is rated for your needs. Without this
+                  information a torque curve cannot be derived.
+                </li>
+                <li>
+                  <b>Rated Current</b>: Current of the motor at a specified
+                  rated speed or torque. If this is not provided, set the
+                  no-load current and rated current to 0 to generate a flat
+                  line. This indicates that the value is unknown.
+                </li>
+                <li>
+                  <b>Rated Torque</b>: Torque value that the motor is rated to
+                  perform. This value is required to derive a torque curve.
+                </li>
+              </ul>
+              <h2>About ratings</h2>
+              <p>
+                A motor's rating can depend on many things. Typically a motor
+                rating is a set point of the motor where it is either the most
+                efficient or the most reliable. When you see a motor's rating
+                consider that the manufactures is placing the motor in factory
+                where it must work 24/7 until it breaks down. But if your
+                application is not a 24/7 100% duty cycle application, where the
+                motor gets an opportunity to do very little and can cool down,
+                like in many robotics applications, then the rating is less
+                meaningful. Testing the motor to see if it can handle your use
+                case at torques greater than the rating is required. But it is
+                absolutely possible to use a motor that is rated below your
+                application needs so long as it has been tested to work in that
+                application, and is given enough time to cool down. Blindly
+                following motor ratings usually results in motors that are 5x
+                larger than what is actually needed in a project.
+              </p>
+              <h2>Titles, links, and sharing</h2>
+              <p>
+                Generating a torque curve is nice and all, but its not helpful
+                if its hard to share the information you've dervived from it. To
+                enable users to share their derived curved, there is a "share"
+                button at the end of the navigation screen. Press it and a link
+                will be provided. This link contains all of the information on
+                the page encoded in base64. When you send the link to someone
+                and they open it, the encoded information is decoded and applied
+                to each field.
+              </p>
+              <p>
+                To enable people to share the torque curves they have derived
+                from a motor's purchase listing, this tool includes a motor
+                title and motor url field. This way a torque curve can be
+                associated with a specific motor found online.
+              </p>
+              <p>
+                If you want to supply an image that can appear in embed links in
+                discord or other websites, press the "Add Image Link" in the
+                navigation bar and paste an image URL there. This should show up
+                in typical website embed fashion.
+              </p>
             </div>
           </div>
         </div>
