@@ -2,26 +2,64 @@ document.addEventListener("DOMContentLoaded", () => {
   const query_string = window.location.search;
   const base64_url_params = new URLSearchParams(query_string);
   let url_params = new URLSearchParams(query_string);
+
+  const title_description_tag = document.querySelector('meta[name="title"]');
+  const share_link = document.getElementById("share-link");
+
   if (base64_url_params.has("data")) {
     url_params = new URLSearchParams(atob(base64_url_params.get("data")));
+    // Get the meta description tag
+    const meta_description_tag = document.querySelector(
+      'meta[name="description"]'
+    );
+
+    // Set the new content for the meta description tag
+    meta_description_tag.setAttribute(
+      "content",
+      `Torque curve for ${url_params.get("motor_name")}.
+       Link to motor datasheet or purchase site can be found here:
+       ${url_params.get("motor_url")}.`
+    );
   }
 
-  const share_link = document.getElementById("share-link");
+  let timeout_handle = null;
 
   document.getElementById("copy-share").onclick = (elem) => {
     navigator.clipboard.writeText(share_link.value);
+    elem.currentTarget.innerHTML = "✅";
+
+    if (timeout_handle) {
+      clearTimeout(timeout_handle);
+    }
+
+    timeout_handle = setTimeout(() => {
+      console.log("fire!");
+      document.getElementById("copy-share").innerHTML = "📋";
+    }, 1000);
   };
 
   function initialize_input(id_name) {
     elem = document.getElementById(id_name);
-    elem.addEventListener("input", (e) => {
-      url_params.set(id_name, e.currentTarget.value);
-      share_link.value =
-        window.location.href.split("?")[0] +
-        "?data=" +
-        btoa(url_params.toString());
-      update();
-    });
+    if (id_name === "motor_name") {
+      elem.addEventListener("input", (e) => {
+        url_params.set(id_name, e.currentTarget.value);
+        share_link.value =
+          window.location.href.split("?")[0] +
+          "?data=" +
+          btoa(url_params.toString());
+        document.title = `${url_params.get("motor_name")} Torque Curve`;
+        update();
+      });
+    } else {
+      elem.addEventListener("input", (e) => {
+        url_params.set(id_name, e.currentTarget.value);
+        share_link.value =
+          window.location.href.split("?")[0] +
+          "?data=" +
+          btoa(url_params.toString());
+        update();
+      });
+    }
     if (url_params.has(id_name)) {
       elem.value = url_params.get(id_name);
     }
@@ -102,6 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
+  function roundWithPrecision(num, precision) {
+    var multiplier = Math.pow(10, precision);
+    return Math.round(num * multiplier) / multiplier;
+  }
+
   function update() {
     const rated_torque = parseFloat(rated_torque_input.value);
     const no_load_speed = parseFloat(no_load_speed_input.value);
@@ -130,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const rpm = no_load_speed + rpm_per_torque * torque_step;
       const current = no_load_current + current_per_torque * torque_step;
       rpm_values.push(rpm);
-      torque_values.push(torque_step);
+      torque_values.push(roundWithPrecision(torque_step, 6));
       current_values.push(current);
 
       if (current <= current_limit) {
@@ -185,6 +228,10 @@ document.addEventListener("DOMContentLoaded", () => {
       table.appendChild(row);
     });
   }
+
+  share_link.value =
+    window.location.href.split("?")[0] + "?data=" + btoa(url_params.toString());
+  document.title = `${url_params.get("motor_name")} Torque Curve`;
 
   update(); // Initial update
 });
