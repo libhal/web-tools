@@ -183,20 +183,14 @@
         <div class="col-12" style="height: 80vh; overflow: auto">
           <table
             class="table table-striped table-hover table-responsive"
-            style="border: 1px solid black"
+            style="border: 1px solid black; font-family: monospace"
           >
             <thead style="position: sticky; top: 0">
               <tr>
-                <th>Timestamp (ms)</th>
-                <th>Message ID</th>
-                <th>data[0]</th>
-                <th>data[1]</th>
-                <th>data[2]</th>
-                <th>data[3]</th>
-                <th>data[4]</th>
-                <th>data[5]</th>
-                <th>data[6]</th>
-                <th>data[7]</th>
+                <th style="width: 16ch">Timestamp (ms)</th>
+                <th style="width: 6ch">Type</th>
+                <th style="width: 20ch">Message ID</th>
+                <th>data</th>
               </tr>
             </thead>
             <tbody id="output_table" class="table-group-divider"></tbody>
