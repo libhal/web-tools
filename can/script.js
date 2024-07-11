@@ -71,8 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const connect_btn = document.querySelector("#connect-btn");
     connect_btn.innerText = "Connect";
     connect_btn.classList.replace("btn-danger", "btn-success");
-    document.querySelector("#baudrate").setAttribute("disabled", false);
-    document.querySelector("#can-bitrate").setAttribute("disabled", false);
+    document.querySelector("#baudrate").removeAttribute("disabled");
+    document.querySelector("#can-bitrate").removeAttribute("disabled");
   });
 
   serialDevice.onData(async (data) => {
@@ -100,18 +100,24 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Data ", match[4]);
 
         let receive_time = Date.now() - uptime_start;
-        let table_entry = `<tr><td>${receive_time}</td><td>${match[2]}</td>`;
+        let table_entry = `
+          <tr><td>${receive_time}</td>
+          <td>${match[1]}</td>
+          <td>${parseInt(match[2], 16).toString(16).padStart(8, "0")}</td>
+        `;
         let length = parseInt(match[3]);
-
+        table_entry += "<td>";
         for (let i = 0; i < length; i++) {
-          table_entry += `<td>${match[4][i * 2]}${match[4][i * 2 + 1]}</td>`;
+          table_entry += `${match[4][i * 2]}${match[4][i * 2 + 1]} `;
         }
+        table_entry += "</td>";
         for (let i = length; i < 8; i++) {
           table_entry += "<td></td>";
         }
         table_entry += "</tr>";
         console.log(`table_entry = ${table_entry}`);
-        document.querySelector("#output_table").innerHTML += table_entry;
+        const output_table = document.querySelector("#output_table");
+        output_table.innerHTML = table_entry + output_table.innerHTML;
       } else {
         console.warn(
           "unmatched = ",
