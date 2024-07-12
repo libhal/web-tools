@@ -12,6 +12,49 @@ const serial_can_message_regex =
   /([rRtT])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
 let can_message_buffer = "";
 
+function updateTable(command) {
+  const match = command.data.match(serial_can_message_regex);
+  if (match) {
+    console.log("Full match: ", match[0]);
+    console.log("Type: ", match[1]);
+    console.log("Message ID: ", match[2]);
+    console.log("Length: ", match[3]);
+    console.log("Data ", match[4]);
+
+    let receive_time = Date.now() - uptime_start;
+    let table_entry = "";
+    if (command.outgoing) {
+      table_entry = "<tr class='self_row'>";
+    } else {
+      table_entry = "<tr>";
+    }
+    table_entry += `
+      <td>${receive_time}</td>
+      <td>${match[1]}</td>
+      <td>${parseInt(match[2], 16).toString(16).padStart(8, "0")}</td>
+    `;
+    let length = parseInt(match[3]);
+    table_entry += "<td>";
+    for (let i = 0; i < length; i++) {
+      table_entry += `${match[4][i * 2]}${match[4][i * 2 + 1]} `;
+    }
+    table_entry += "</td>";
+    for (let i = length; i < 8; i++) {
+      table_entry += "<td></td>";
+    }
+    table_entry += "</tr>";
+    console.log(`table_entry = ${table_entry}`);
+    const output_table = document.querySelector("#output_table_body");
+    output_table.innerHTML = table_entry + output_table.innerHTML;
+  } else {
+    console.warn(
+      "unmatched = ",
+      current_command,
+      new TextEncoder("utf-8").encode(current_command)
+    );
+  }
+}
+
 // [DEV NOTE]: Execute this function directly in the chrome console to test
 // receiving data without needing to connect a device.
 async function handleReceivedData(data) {
@@ -24,47 +67,65 @@ async function handleReceivedData(data) {
   }
 
   can_message_buffer += data;
-  const end_of_command = can_message_buffer.indexOf("\r");
+  let end_of_command = can_message_buffer.indexOf("\r");
 
-  if (end_of_command != -1) {
+  // Keep parsing out data until the message buffer is empty
+  while (end_of_command != -1) {
     let current_command = can_message_buffer.substring(0, end_of_command + 1);
     can_message_buffer = can_message_buffer.substring(end_of_command + 2);
-
-    const match = current_command.match(serial_can_message_regex);
-    if (match) {
-      console.log("Full match: ", match[0]);
-      console.log("Type: ", match[1]);
-      console.log("Message ID: ", match[2]);
-      console.log("Length: ", match[3]);
-      console.log("Data ", match[4]);
-
-      let receive_time = Date.now() - uptime_start;
-      let table_entry = `
-        <tr><td>${receive_time}</td>
-        <td>${match[1]}</td>
-        <td>${parseInt(match[2], 16).toString(16).padStart(8, "0")}</td>
-      `;
-      let length = parseInt(match[3]);
-      table_entry += "<td>";
-      for (let i = 0; i < length; i++) {
-        table_entry += `${match[4][i * 2]}${match[4][i * 2 + 1]} `;
-      }
-      table_entry += "</td>";
-      for (let i = length; i < 8; i++) {
-        table_entry += "<td></td>";
-      }
-      table_entry += "</tr>";
-      console.log(`table_entry = ${table_entry}`);
-      const output_table = document.querySelector("#output_table_body");
-      output_table.innerHTML = table_entry + output_table.innerHTML;
-    } else {
-      console.warn(
-        "unmatched = ",
-        current_command,
-        new TextEncoder("utf-8").encode(current_command)
-      );
-    }
+    updateTable({ data: current_command, outgoing: false });
+    end_of_command = can_message_buffer.indexOf("\r");
   }
+}
+
+async function sendCanMessage() {
+  if (!serialDevice.isConnected()) {
+    return;
+  }
+
+  const message_id = parseInt(document.querySelector("#message_id").value, 16);
+  const length = parseInt(document.querySelector("#length").value);
+  const valid_length = 0 <= length && length <= 8;
+  let data = [
+    parseInt(document.querySelector("#data_0").value, 16),
+    parseInt(document.querySelector("#data_1").value, 16),
+    parseInt(document.querySelector("#data_2").value, 16),
+    parseInt(document.querySelector("#data_3").value, 16),
+    parseInt(document.querySelector("#data_4").value, 16),
+    parseInt(document.querySelector("#data_5").value, 16),
+    parseInt(document.querySelector("#data_6").value, 16),
+    parseInt(document.querySelector("#data_7").value, 16),
+  ];
+
+  if (!valid_length) {
+    console.error("Invalid length for transmit message");
+    return;
+  }
+
+  if (isNaN(message_id)) {
+    console.error("Invalid message id!");
+    return;
+  }
+
+  // Remove the data elements we do not need
+  data = data.splice(0, length);
+
+  if (data.some(Number.isNaN)) {
+    console.error("Invalid data field!");
+    return;
+  }
+
+  let payload = "t" + message_id.toString(16).padStart(3, "0") + length;
+  for (let i = 0; i < data.length; i++) {
+    payload += data[i].toString(16).padStart(2, "0");
+  }
+  payload += "\r";
+
+  console.log("sending...", payload);
+
+  await serialDevice.write(payload);
+
+  updateTable({ data: payload, outgoing: true });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -179,53 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.querySelector("#transmit").addEventListener("click", async () => {
-    if (!serialDevice.isConnected()) {
-      return;
-    }
-
-    const message_id = parseInt(
-      document.querySelector("#message_id").value,
-      16
-    );
-    const length = parseInt(document.querySelector("#length").value);
-    const valid_length = 0 <= length && length <= 8;
-    const data = [
-      parseInt(document.querySelector("#data_0").value, 16),
-      parseInt(document.querySelector("#data_1").value, 16),
-      parseInt(document.querySelector("#data_2").value, 16),
-      parseInt(document.querySelector("#data_3").value, 16),
-      parseInt(document.querySelector("#data_4").value, 16),
-      parseInt(document.querySelector("#data_5").value, 16),
-      parseInt(document.querySelector("#data_6").value, 16),
-      parseInt(document.querySelector("#data_7").value, 16),
-    ];
-
-    if (!valid_length) {
-      console.error("Invalid length for transmit message");
-      return;
-    }
-
-    if (isNaN(message_id)) {
-      console.error("Invalid message id!");
-      return;
-    }
-
-    if (data.some(Number.isNaN)) {
-      console.error("Invalid data field!");
-      return;
-    }
-
-    let payload = "t" + message_id.toString(16).padStart(3, "0") + length;
-    for (let i = 0; i < parseInt(length); i++) {
-      payload += data[i].toString(16).padStart(2, "0");
-    }
-    payload += "\r";
-
-    console.log("sending...", payload);
-
-    await serialDevice.write(payload);
-  });
+  document.querySelector("#transmit").addEventListener("click", sendCanMessage);
 
   const inputs = [
     "#message_id",
