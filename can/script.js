@@ -12,6 +12,61 @@ const serial_can_message_regex =
   /([rRtT])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
 let can_message_buffer = "";
 
+// [DEV NOTE]: Execute this function directly in the chrome console to test
+// receiving data without needing to connect a device.
+async function handleReceivedData(data) {
+  console.log(data);
+
+  if (data.includes("\x07")) {
+    console.error("Serial Can responded with an error response!");
+    can_message_buffer = "";
+    return;
+  }
+
+  can_message_buffer += data;
+  const end_of_command = can_message_buffer.indexOf("\r");
+
+  if (end_of_command != -1) {
+    let current_command = can_message_buffer.substring(0, end_of_command + 1);
+    can_message_buffer = can_message_buffer.substring(end_of_command + 2);
+
+    const match = current_command.match(serial_can_message_regex);
+    if (match) {
+      console.log("Full match: ", match[0]);
+      console.log("Type: ", match[1]);
+      console.log("Message ID: ", match[2]);
+      console.log("Length: ", match[3]);
+      console.log("Data ", match[4]);
+
+      let receive_time = Date.now() - uptime_start;
+      let table_entry = `
+        <tr><td>${receive_time}</td>
+        <td>${match[1]}</td>
+        <td>${parseInt(match[2], 16).toString(16).padStart(8, "0")}</td>
+      `;
+      let length = parseInt(match[3]);
+      table_entry += "<td>";
+      for (let i = 0; i < length; i++) {
+        table_entry += `${match[4][i * 2]}${match[4][i * 2 + 1]} `;
+      }
+      table_entry += "</td>";
+      for (let i = length; i < 8; i++) {
+        table_entry += "<td></td>";
+      }
+      table_entry += "</tr>";
+      console.log(`table_entry = ${table_entry}`);
+      const output_table = document.querySelector("#output_table_body");
+      output_table.innerHTML = table_entry + output_table.innerHTML;
+    } else {
+      console.warn(
+        "unmatched = ",
+        current_command,
+        new TextEncoder("utf-8").encode(current_command)
+      );
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   serialDevice.setBaudRateSourceCallback(() => {
     return document.querySelector("#baudrate").value;
@@ -75,58 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("#can-bitrate").removeAttribute("disabled");
   });
 
-  serialDevice.onData(async (data) => {
-    console.log(data);
-
-    if (data.includes("\x07")) {
-      console.error("Serial Can responded with an error response!");
-      can_message_buffer = "";
-      return;
-    }
-
-    can_message_buffer += data;
-    const end_of_command = can_message_buffer.indexOf("\r");
-
-    if (end_of_command != -1) {
-      let current_command = can_message_buffer.substring(0, end_of_command + 1);
-      can_message_buffer = can_message_buffer.substring(end_of_command + 2);
-
-      const match = current_command.match(serial_can_message_regex);
-      if (match) {
-        console.log("Full match: ", match[0]);
-        console.log("Type: ", match[1]);
-        console.log("Message ID: ", match[2]);
-        console.log("Length: ", match[3]);
-        console.log("Data ", match[4]);
-
-        let receive_time = Date.now() - uptime_start;
-        let table_entry = `
-          <tr><td>${receive_time}</td>
-          <td>${match[1]}</td>
-          <td>${parseInt(match[2], 16).toString(16).padStart(8, "0")}</td>
-        `;
-        let length = parseInt(match[3]);
-        table_entry += "<td>";
-        for (let i = 0; i < length; i++) {
-          table_entry += `${match[4][i * 2]}${match[4][i * 2 + 1]} `;
-        }
-        table_entry += "</td>";
-        for (let i = length; i < 8; i++) {
-          table_entry += "<td></td>";
-        }
-        table_entry += "</tr>";
-        console.log(`table_entry = ${table_entry}`);
-        const output_table = document.querySelector("#output_table");
-        output_table.innerHTML = table_entry + output_table.innerHTML;
-      } else {
-        console.warn(
-          "unmatched = ",
-          current_command,
-          new TextEncoder("utf-8").encode(current_command)
-        );
-      }
-    }
-  });
+  serialDevice.onData(handleReceivedData);
 
   document.querySelector("#connect-btn").addEventListener("click", async () => {
     if (!serialDevice.isConnected()) {
@@ -143,6 +147,35 @@ document.addEventListener("DOMContentLoaded", () => {
       baudrate_input.focus();
     } else {
       baudrate_input.hidden = true;
+    }
+  });
+
+  document.querySelector("#length").addEventListener("change", (event) => {
+    console.log("length update!");
+    if (event.target.value > 8) {
+      event.target.value = 8;
+    }
+    if (event.target.value < 0) {
+      event.target.value = 0;
+    }
+
+    const data = [
+      document.querySelector("#data_0"),
+      document.querySelector("#data_1"),
+      document.querySelector("#data_2"),
+      document.querySelector("#data_3"),
+      document.querySelector("#data_4"),
+      document.querySelector("#data_5"),
+      document.querySelector("#data_6"),
+      document.querySelector("#data_7"),
+    ];
+
+    for (let i = 0; i < event.target.value; i++) {
+      data[i].removeAttribute("disabled");
+    }
+
+    for (let i = event.target.value; i < 8; i++) {
+      data[i].setAttribute("disabled", true);
     }
   });
 
