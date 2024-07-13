@@ -49,8 +49,8 @@ function updateTable(command) {
   } else {
     console.warn(
       "unmatched = ",
-      current_command,
-      new TextEncoder("utf-8").encode(current_command)
+      command,
+      new TextEncoder("utf-8").encode(command)
     );
   }
 }
