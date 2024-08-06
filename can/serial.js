@@ -22,6 +22,9 @@ class SerialDevice {
     this.onConnectCallback = null;
     this.onDisconnectCallback = null;
     this.connected = false;
+    this.received_data = new Array();
+    this.read_index = 0;
+    this.invertedBoot = true;
   }
 
   // Method to request and open a serial port
@@ -52,6 +55,9 @@ class SerialDevice {
 
   // Private method to start reading from the serial port
   async startReading() {
+    this.read_index = 0;
+    this.received_data = new Array();
+
     while (this.port && this.port.readable) {
       try {
         const { value, done } = await this.reader.read();
@@ -61,14 +67,40 @@ class SerialDevice {
           break;
         }
         if (this.onDataCallback) {
-          this.onDataCallback(new TextDecoder().decode(value));
+          this.onDataCallback(new TextDecoder("utf-8").decode(value));
+        } else {
+          this.received_data.push(...Array.from(value));
         }
       } catch (error) {
         console.error("Error reading from serial port:", error);
         this.reader.releaseLock();
+        this.read_index = 0;
+        this.received_data = new Array();
         break;
       }
     }
+  }
+
+  async read(read_count, timeout_time_ms) {
+    let timed_out = false;
+
+    let handle = setTimeout(() => {
+      timed_out = true;
+    }, timeout_time_ms);
+
+    while (this.received_data.length - this.read_index < read_count && this.port.readable) {
+      if (timed_out) {
+        throw (new Error(`Read of count '${read_count}' and timeout time ${timeout_time_ms}`));
+      }
+      await sleep(1);
+    }
+
+    clearTimeout(handle);
+
+    let result = this.received_data.slice(this.read_index, this.read_index + read_count);
+    this.read_index += read_count;
+
+    return result;
   }
 
   onData(callback) {
@@ -92,6 +124,10 @@ class SerialDevice {
   }
 
   async setSignals(signals) {
+    if (this.invertedBoot) {
+      let invertedBoot = !(signals.requestToSend);
+      signals.requestToSend = invertedBoot;
+    }
     await this.port.setSignals(signals);
   }
 
