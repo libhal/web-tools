@@ -7,8 +7,7 @@ async function sleep(ms) {
 }
 
 const uptime_start = Date.now();
-const binary_link =
-  "https://github.com/libhal/can-opener/releases/download/0.0.0/mod-stm32f1-v4-Debug.bin";
+const binary_link = "./mod-stm32f1-v4-Debug.bin";
 
 const serial_can_message_regex =
   /([rRtT])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
@@ -323,13 +322,11 @@ document.addEventListener("DOMContentLoaded", () => {
     finished_message.style.display = "none";
     close_button.setAttribute("disabled", true);
 
-    // start [broken]
-    // The fetch does nothing here. Replace this with the correct HTTP Request
-    const response = await fetch(binary_link, { mode: "no-cors" });
-    const content = await response.blob();
+    const response = await fetch(binary_link);
+    const blob = await response.blob();
+    const content = await blob.arrayBuffer();
     console.log(content);
     console.log(response);
-    // end [broken]
 
     await programDevice(content, updateProgressBar);
 
