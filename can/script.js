@@ -7,6 +7,8 @@ async function sleep(ms) {
 }
 
 const uptime_start = Date.now();
+const binary_link =
+  "https://github.com/libhal/can-opener/releases/download/0.0.0/mod-stm32f1-v4-Debug.bin";
 
 const serial_can_message_regex =
   /([rRtT])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
@@ -126,6 +128,53 @@ async function sendCanMessage() {
   await serialDevice.write(payload);
 
   updateTable({ data: payload, outgoing: true });
+}
+
+/**
+ *
+ * @param {double} percentage - from 0.0 to 1.0
+ */
+function updateProgressBar(percentage) {
+  const flash_progress = document.querySelector("#flash-progress");
+  const scaled_percent = Math.ceil(percentage * 100.0);
+  flash_progress.style.width = `${scaled_percent}%`;
+  flash_progress.innerHTML = `${scaled_percent}%`;
+}
+
+async function flashDevice(content, upgradeProgressFunction) {
+  // fill this out later...
+  upgradeProgressFunction(0.15);
+  await sleep(500);
+
+  upgradeProgressFunction(0.2);
+  await sleep(500);
+
+  upgradeProgressFunction(0.25);
+  await sleep(500);
+
+  upgradeProgressFunction(0.4);
+  await sleep(500);
+
+  upgradeProgressFunction(0.5);
+  await sleep(500);
+
+  upgradeProgressFunction(0.55);
+  await sleep(500);
+
+  upgradeProgressFunction(0.65);
+  await sleep(500);
+
+  upgradeProgressFunction(0.67);
+  await sleep(500);
+
+  upgradeProgressFunction(0.8);
+  await sleep(500);
+
+  upgradeProgressFunction(0.95);
+  await sleep(500);
+
+  upgradeProgressFunction(1.0);
+  await sleep(500);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -263,5 +312,18 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector("#transmit").click();
       }
     });
+  });
+
+  document.querySelector("#upgrade").addEventListener("click", async () => {
+    const close_button = document.querySelector("#close-programming-modal");
+    const response = await fetch(binary_link);
+    const content = await response.blob();
+
+    console.log(content);
+    console.log(response);
+
+    await flashDevice(content, updateProgressBar);
+
+    close_button.click();
   });
 });
