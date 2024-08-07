@@ -58,6 +58,16 @@
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <button
               type="button"
+              class="btn btn-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#flash-modal"
+              style="margin-right: 5px"
+              id="upgrade"
+            >
+              💾&nbsp;Program&nbsp;Device
+            </button>
+            <button
+              type="button"
               class="btn btn-primary"
               disabled="disabled"
               data-bs-toggle="modal"
@@ -279,6 +289,43 @@
           <div class="modal-body">
             <div class="input-group mb-3">
               <input type="text" class="form-control" id="image_link" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      tabindex="-1"
+      id="flash-modal"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Programming CanOpener...</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              style="display: none"
+              id="close-programming-modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>This should only be used on CanOpener hardware.</p>
+            <p style="color: grey">(dry run, no programming happening...)</p>
+            <div class="progress" role="progressbar">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                style="width: 25%"
+                id="flash-progress"
+              >
+                25%
+              </div>
             </div>
           </div>
         </div>
