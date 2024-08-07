@@ -316,7 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#upgrade").addEventListener("click", async () => {
     const close_button = document.querySelector("#close-programming-modal");
-    const response = await fetch(binary_link);
+    const response = await fetch(binary_link, { mode: "no-cors" });
     const content = await response.blob();
 
     console.log(content);
