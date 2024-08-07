@@ -131,49 +131,50 @@ async function sendCanMessage() {
 }
 
 /**
+ * Update progress bar to reflect the percentage of the programming state
  *
  * @param {double} percentage - from 0.0 to 1.0
  */
 function updateProgressBar(percentage) {
-  const flash_progress = document.querySelector("#flash-progress");
+  const program_progress_bar = document.querySelector("#flash-progress");
   const scaled_percent = Math.ceil(percentage * 100.0);
-  flash_progress.style.width = `${scaled_percent}%`;
-  flash_progress.innerHTML = `${scaled_percent}%`;
+  program_progress_bar.style.width = `${scaled_percent}%`;
+  program_progress_bar.innerHTML = `${scaled_percent}%`;
 }
 
-async function flashDevice(content, upgradeProgressFunction) {
+async function programDevice(content, progress_indicator) {
   // fill this out later...
-  upgradeProgressFunction(0.15);
+  progress_indicator(0.15);
   await sleep(500);
 
-  upgradeProgressFunction(0.2);
+  progress_indicator(0.2);
   await sleep(500);
 
-  upgradeProgressFunction(0.25);
+  progress_indicator(0.25);
   await sleep(500);
 
-  upgradeProgressFunction(0.4);
+  progress_indicator(0.4);
   await sleep(500);
 
-  upgradeProgressFunction(0.5);
+  progress_indicator(0.5);
   await sleep(500);
 
-  upgradeProgressFunction(0.55);
+  progress_indicator(0.55);
   await sleep(500);
 
-  upgradeProgressFunction(0.65);
+  progress_indicator(0.65);
   await sleep(500);
 
-  upgradeProgressFunction(0.67);
+  progress_indicator(0.67);
   await sleep(500);
 
-  upgradeProgressFunction(0.8);
+  progress_indicator(0.8);
   await sleep(500);
 
-  upgradeProgressFunction(0.95);
+  progress_indicator(0.95);
   await sleep(500);
 
-  upgradeProgressFunction(1.0);
+  progress_indicator(1.0);
   await sleep(500);
 }
 
@@ -316,14 +317,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#upgrade").addEventListener("click", async () => {
     const close_button = document.querySelector("#close-programming-modal");
+    const finished_message = document.querySelector(
+      "#program-finished-message"
+    );
+    finished_message.style.display = "none";
+    close_button.setAttribute("disabled", true);
+
+    // start [broken]
+    // The fetch does nothing here. Replace this with the correct HTTP Request
     const response = await fetch(binary_link, { mode: "no-cors" });
     const content = await response.blob();
-
     console.log(content);
     console.log(response);
+    // end [broken]
 
-    await flashDevice(content, updateProgressBar);
+    await programDevice(content, updateProgressBar);
 
-    close_button.click();
+    finished_message.style.display = "block";
+    close_button.removeAttribute("disabled");
   });
 });
