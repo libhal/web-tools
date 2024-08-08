@@ -1,4 +1,4 @@
-const serialDevice = new SerialDevice();
+const serialDevice = new StmDevice();
 
 async function sleep(ms) {
   return new Promise((resolve) => {
@@ -141,42 +141,6 @@ function updateProgressBar(percentage) {
   program_progress_bar.innerHTML = `${scaled_percent}%`;
 }
 
-async function programDevice(content, progress_indicator) {
-  // fill this out later...
-  progress_indicator(0.15);
-  await sleep(500);
-
-  progress_indicator(0.2);
-  await sleep(500);
-
-  progress_indicator(0.25);
-  await sleep(500);
-
-  progress_indicator(0.4);
-  await sleep(500);
-
-  progress_indicator(0.5);
-  await sleep(500);
-
-  progress_indicator(0.55);
-  await sleep(500);
-
-  progress_indicator(0.65);
-  await sleep(500);
-
-  progress_indicator(0.67);
-  await sleep(500);
-
-  progress_indicator(0.8);
-  await sleep(500);
-
-  progress_indicator(0.95);
-  await sleep(500);
-
-  progress_indicator(1.0);
-  await sleep(500);
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   serialDevice.setBaudRateSourceCallback(() => {
     return document.querySelector("#baudrate").value;
@@ -184,6 +148,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   serialDevice.onConnect(async () => {
     try {
+      serialDevice.error = null;
+      const close_button = document.querySelector("#close-programming-modal");
+      close_button.setAttribute("disabled", true);
+      close_button.classList.replace("btn-primary", "btn-secondary");
+      document.querySelector(
+        "#program-status-message"
+      ).innerText = 'Flashing latest firmware. Please wait...';
       document.querySelector("#connect-btn").innerText = "Disconnect";
       document
         .querySelector("#connect-btn")
@@ -197,14 +168,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       await serialDevice.setSignals({
         dataTerminalReady: true,
-        requestToSend: false,
+        requestToSend: true,
       });
 
       await sleep(200);
 
       await serialDevice.setSignals({
         dataTerminalReady: false,
-        requestToSend: false,
+        requestToSend: true,
       });
 
       await sleep(200);
@@ -225,6 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("sending O");
       await serialDevice.write("O\r");
       await sleep(50);
+      document.querySelector("#upgrade").removeAttribute("disabled");
     } catch (error) {
       console.error(error);
       await serialDevice.disconnect();
@@ -238,6 +210,16 @@ document.addEventListener("DOMContentLoaded", () => {
     connect_btn.classList.replace("btn-danger", "btn-success");
     document.querySelector("#baudrate").removeAttribute("disabled");
     document.querySelector("#can-bitrate").removeAttribute("disabled");
+    document.querySelector("#upgrade").setAttribute("disabled", true);
+
+    if (serialDevice.error) {
+      const close_button = document.querySelector("#close-programming-modal");
+      document.querySelector(
+        "#program-status-message"
+      ).innerText = serialDevice.error;
+      close_button.removeAttribute("disabled");
+      close_button.classList.replace("btn-secondary", "btn-primary");
+    }
   });
 
   serialDevice.onData(handleReceivedData);
@@ -316,21 +298,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#upgrade").addEventListener("click", async () => {
     const close_button = document.querySelector("#close-programming-modal");
-    const finished_message = document.querySelector(
-      "#program-finished-message"
+    const flash_status = document.querySelector(
+      "#program-status-message"
     );
-    finished_message.style.display = "none";
     close_button.setAttribute("disabled", true);
 
-    const response = await fetch(binary_link);
-    const blob = await response.blob();
-    const content = await blob.arrayBuffer();
-    console.log(content);
-    console.log(response);
-
-    await programDevice(content, updateProgressBar);
-
-    finished_message.style.display = "block";
-    close_button.removeAttribute("disabled");
+    await serialDevice.flash(updateProgressBar);
+    if (serialDevice.isConnected()) {
+      flash_status.innerText = "Flash complete! Close to start using CanOpener!";
+      close_button.removeAttribute("disabled");
+      close_button.classList.replace("btn-secondary", "btn-primary");
+    }
   });
+
+  document.querySelector("#close-programming-modal").addEventListener("click", async () => {
+    try {
+      if (serialDevice.isConnected()) {
+        await sleep(300);
+        await serialDevice.onConnectCallback();
+      }
+    }
+    catch (error) {
+      await serialDevice.disconnect();
+    }
+  }
+  )
 });
