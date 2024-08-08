@@ -76,6 +76,8 @@ class SerialDevice {
         this.reader.releaseLock();
         this.read_index = 0;
         this.received_data = new Array();
+        this.disconnect();
+        this.connected = false;
         break;
       }
     }
