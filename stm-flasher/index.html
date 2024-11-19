@@ -20,13 +20,62 @@
     body {
       font-family: monospace;
     }
+
+    #welcome {
+      animation: slideDown 2s;
+    }
+
+    #instructions {
+      opacity: 0;
+      transition: opacity 2s;
+      transition-delay: 1.5s;
+    }
+
+    #connect-btn {
+      margin: 0 auto;
+      display: block;
+      animation: pulse 4s infinite;
+      animation-delay: 3s;
+    }
+
+    @keyframes slideDown {
+      0% {
+        transform: translateY(-100px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0px);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform(scale(.9));
+      }
+
+      20% {
+        transform(scale(.9));
+      }
+
+      80% {
+        transform(scale(1));
+        box-shadow: 0 0 10px 10px lightgreen;
+      }
+
+      100% {
+        transform(scale(.9));
+        box-shadow: 0 0 0 0 lightgreen;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <div style="margin: auto; width: 50%; text-align:center;">
+  <div style="margin: auto; width: 50%; text-align:center; padding-top: 50px;">
     </br>
-    <h1>Welcome to the libhal STM32 Web Flasher!</h1>
+    <h1 id="welcome">Welcome to the libhal STM32 Web Flasher!</h1>
     </br>
     <p id="instructions">To get started, click connect and select your device!</p>
   </div>
@@ -47,7 +96,7 @@
     </br>
   </div>
 
-  <button style="margin:0 auto; display: block;" type=" button" class="btn btn-success" id="connect-btn">
+  <button type="button" class="btn btn-success" id="connect-btn">
     Connect
   </button>
 
@@ -81,6 +130,13 @@
   <script src="../resources/scripts/serial.js"></script>
   <script src="../resources/scripts/stm.js"></script>
   <script src="../resources/scripts/script.js"></script>
+  <script>
+    window.addEventListener("load", myInit, true);
+    function myInit() {
+      document.getElementById('welcome').style.opacity = '1';
+      document.getElementById('instructions').style.opacity = '1'
+    };
+  </script>
 </body>
 
 </html>
