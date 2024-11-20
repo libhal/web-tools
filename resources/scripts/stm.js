@@ -132,21 +132,28 @@ class StmDevice extends SerialDevice {
       console.log('Erasing flash...');
       await this.eraseFlash();
 
+      const modalText = document.querySelector("#program-status-message");
+
       var firmware = document.getElementById("firmware-select");
-      if (firmware.value != 'erase')
+      if (firmware.value == 'erase')
       {
+        modalText.innerText = "Flash memory erased!";
+      }
+      else {
+        modalText.innerText = "Flashing latest firmware. Please wait...";
         this.flashContent = await tools.readBinary(firmware.value);
         let startAddress = parseInt("0x8000000");
-
+        
         await this.writeBlocks(this.flashContent, startAddress, updateProgressBar);
         console.log('STM Write complete.');
-
+        
         console.log('Starting code execution');
         await this.goToAddress(startAddress);
         await this.setSignals({
           dataTerminalReady: false, // RESET HIGH
           requestToSend: true, // return BOOT to LOW
         });
+        document.querySelector("#program-status-message").innerText = "Flash complete! Device is disconnected and ready to use!";
       }
       console.log("Resetting Device...");
       // double reset used to make sure device is ready to use when disconnected (needed for cmsis-dap bin)

@@ -47,17 +47,18 @@ function updateProgressBar(percentage) {
 
 function resetModal() {
   const close_button = document.querySelector("#close-programming-modal");
-  close_button.setAttribute("disabled", true);
-  close_button.classList.replace("btn-primary", "btn-secondary");
   document.querySelector(
     "#program-status-message"
-  ).innerText = 'Flashing latest firmware. Please wait...';
+  ).innerText = 'Please select a device...';
   
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   serialDevice.onConnect(async () => {
     try {
+      const close_button = document.querySelector("#close-programming-modal");
+      close_button.setAttribute('disabled', true);
+      close_button.classList.replace("btn-primary", "btn-secondary");
       serialDevice.error = null;
       resetModal();
       console.log("Resetting Device");
@@ -76,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
         requestToSend: true,
       });
 
-      const close_button = document.querySelector("#close-programming-modal");
       const flash_status = document.querySelector(
         "#program-status-message"
       );
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (serialDevice.isConnected()) {
         document.querySelector("#flash-progress").style.width='0%';
         await sleep(200);
-        flash_status.innerText = "Flash complete! Device is disconnected and ready to use!";
+        
         close_button.removeAttribute("disabled");
         close_button.classList.replace("btn-secondary", "btn-primary");
         serialDevice.disconnect();
