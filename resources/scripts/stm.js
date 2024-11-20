@@ -145,9 +145,7 @@ class StmDevice extends SerialDevice {
         let startAddress = parseInt("0x8000000");
         
         await this.writeBlocks(this.flashContent, startAddress, updateProgressBar);
-        console.log('STM Write complete.');
-        
-        console.log('Starting code execution');
+        console.log('STM Write complete, Starting code execution');
         await this.goToAddress(startAddress);
         await this.setSignals({
           dataTerminalReady: false, // RESET HIGH
