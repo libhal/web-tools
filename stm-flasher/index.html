@@ -17,18 +17,37 @@
 
   <link href="../third_party/bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
+    html {
+      height: 100%;
+    }
+
     body {
+      background-image: linear-gradient(white, #5a5e6e);
       font-family: monospace;
     }
 
     #welcome {
+      margin: auto;
+      width: 50%;
+      text-align: center;
       animation: slideDown 2s;
     }
 
     #instructions {
+      margin: auto;
+      text-align: center;
       opacity: 0;
       transition: opacity 2s;
       transition-delay: 1.5s;
+    }
+
+
+    #logo {
+      margin: auto;
+      display: block;
+      width: 20rem;
+      animation: floating 7s infinite;
+      animation-timing-function: ease-in-out;
     }
 
     #connect-btn {
@@ -52,53 +71,69 @@
 
     @keyframes pulse {
       0% {
-        transform(scale(.9));
+        transform: scale(1);
       }
 
       20% {
-        transform(scale(.9));
+        transform: scale(1);
       }
 
       80% {
-        transform(scale(1));
+        transform: scale(.95);
         box-shadow: 0 0 10px 10px lightgreen;
       }
 
       100% {
-        transform(scale(.9));
+        transform: scale(1);
         box-shadow: 0 0 0 0 lightgreen;
+      }
+    }
+
+    @keyframes floating {
+      0% {
+        transform: translateY(-40px);
+      }
+
+      50% {
+        transform: translateY(0px);
+      }
+
+      100% {
+        transform: translateY(-40px);
       }
     }
   </style>
 </head>
 
 <body>
-  <div style="margin: auto; width: 50%; text-align:center; padding-top: 50px;">
-    </br>
+  <div>
+    <br>
     <h1 id="welcome">Welcome to the libhal STM32 Web Flasher!</h1>
-    </br>
-    <p id="instructions">To get started, click connect and select your device!</p>
+    <br>
   </div>
-  </br>
 
-  <div id="flash-elements" class="input-group" style="width: 60%; margin: auto; padding-bottom: 3em;" hidden="true">
-    <label id="firm-select-label" class="input-group-text" for="firmware-select">Firmware</label>
-
-    <select class="form-select" id="firmware-select" class="form-select" style="margin-right: 5px;">
-      <option value="../resources/binaries/DAP103-stlink.bin" selected="selected">STLink Debugger</option>
-      <option value="../resources/binaries/mod-stm32f1-v4-Debug.bin">Can Opener</option>
-    </select>
-    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#program-modal"
-      style="margin-right: 5px" id="upgrade">
-      💾&nbsp;Program&nbsp;Device
+  <div id="instructions">
+    <p>To get started, select the firmware,
+      <br>click "connect and flash", and select your device!
+    </p>
+    <br>
+    <div class="input-group" style="width: 50%; margin:auto">
+      <label for="firmware-select" id="firm-select-label" class="input-group-text">Firmware</label>
+      <select class="form-select" id="firmware-select" class="form-select">
+        <option value="../resources/binaries/DAP103-stlink.bin" selected="selected">CMSIS-DAP Debugger</option>
+        <option value="../resources/binaries/mod-stm32f1-v4-Debug.bin">Can Opener</option>
+        <option value="erase">Erase Flash</option>
+      </select>
+    </div>
+    <br>
+    <button type="button" class="btn btn-success" id="connect-btn" data-bs-toggle="modal"
+      data-bs-target="#program-modal">💾 Connect and Flash 💾
     </button>
-    </br>
-    </br>
   </div>
+  <br>
+  <br>
 
-  <button type="button" class="btn btn-success" id="connect-btn">
-    Connect
-  </button>
+  <img src="../resources/images/libhal.png" alt="libhal" id="logo">
 
   <div class="modal fade" tabindex="-1" id="program-modal" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog">
@@ -107,7 +142,7 @@
           <h5 class="modal-title">Programming STM Device...</h5>
         </div>
         <div class="modal-body">
-          <p id="program-status-message">Flashing latest firmware. Please wait...</p>
+          <p id="program-status-message">Flashing firmware. Please wait...</p>
           <div class="progress" role="progressbar">
             <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%"
               id="flash-progress">

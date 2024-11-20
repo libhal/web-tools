@@ -8,6 +8,8 @@ async function sleep(ms) {
 
 let message_buffer = "";
 
+serialDevice.onData(handleReceivedData);
+
 // [DEV NOTE]: Execute this function directly in the chrome console to test
 // receiving data without needing to connect a device.
 async function handleReceivedData(data) {
@@ -43,21 +45,21 @@ function updateProgressBar(percentage) {
   program_progress_bar.innerHTML = `${scaled_percent}%`;
 }
 
+function resetModal() {
+  const close_button = document.querySelector("#close-programming-modal");
+  close_button.setAttribute("disabled", true);
+  close_button.classList.replace("btn-primary", "btn-secondary");
+  document.querySelector(
+    "#program-status-message"
+  ).innerText = 'Flashing latest firmware. Please wait...';
+  
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   serialDevice.onConnect(async () => {
     try {
       serialDevice.error = null;
-      const close_button = document.querySelector("#close-programming-modal");
-      close_button.setAttribute("disabled", true);
-      close_button.classList.replace("btn-primary", "btn-secondary");
-      document.querySelector(
-        "#program-status-message"
-      ).innerText = 'Flashing latest firmware. Please wait...';
-      document.querySelector("#connect-btn").innerText = "Disconnect";
-      document
-        .querySelector("#connect-btn")
-        .classList.replace("btn-success", "btn-danger");
-
+      resetModal();
       console.log("Resetting Device");
 
       await sleep(200);
@@ -74,9 +76,22 @@ document.addEventListener("DOMContentLoaded", () => {
         requestToSend: true,
       });
 
-      await sleep(200);
-      document.querySelector("#flash-elements").removeAttribute("hidden");
-      document.querySelector("#instructions").innerText = "Select which supported firmware to use and click Program Device."
+      const close_button = document.querySelector("#close-programming-modal");
+      const flash_status = document.querySelector(
+        "#program-status-message"
+      );
+      close_button.setAttribute("disabled", true);
+
+      await serialDevice.flash(updateProgressBar);
+      if (serialDevice.isConnected()) {
+        document.querySelector("#flash-progress").style.width='0%';
+        await sleep(200);
+        flash_status.innerText = "Flash complete! Device is disconnected and ready to use!";
+        close_button.removeAttribute("disabled");
+        close_button.classList.replace("btn-secondary", "btn-primary");
+        serialDevice.disconnect();
+      }
+
     } catch (error) {
       console.error(error);
       await serialDevice.disconnect();
@@ -85,11 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   serialDevice.onDisconnect(() => {
     console.log("Disconnected event called!");
-    const connect_btn = document.querySelector("#connect-btn");
-    connect_btn.innerText = "Connect";
-    connect_btn.classList.replace("btn-danger", "btn-success");
-    document.querySelector("#flash-elements").setAttribute("hidden", true);
-    document.querySelector("#instructions").innerText = "To get started, click connect and select your device!"
     if (serialDevice.error) {
       const close_button = document.querySelector("#close-programming-modal");
       document.querySelector(
@@ -100,8 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  serialDevice.onData(handleReceivedData);
-
   document.querySelector("#connect-btn").addEventListener("click", async () => {
     if (!serialDevice.isConnected()) {
       serialDevice.connect();
@@ -110,30 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.querySelector("#upgrade").addEventListener("click", async () => {
-    const close_button = document.querySelector("#close-programming-modal");
-    const flash_status = document.querySelector(
-      "#program-status-message"
-    );
-    close_button.setAttribute("disabled", true);
-
-    await serialDevice.flash(updateProgressBar);
-    if (serialDevice.isConnected()) {
-      flash_status.innerText = "Flash complete!";
-      close_button.removeAttribute("disabled");
-      close_button.classList.replace("btn-secondary", "btn-primary");
-    }
-  });
-
   document.querySelector("#close-programming-modal").addEventListener("click", async () => {
-    try {
-      if (serialDevice.isConnected()) {
-        await sleep(300);
-        await serialDevice.onConnectCallback();
-      }
-    }
-    catch (error) {
-      await serialDevice.disconnect();
-    }
+    resetModal();
   });
 });

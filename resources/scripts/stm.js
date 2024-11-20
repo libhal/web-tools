@@ -47,7 +47,7 @@ const tools = {
 
   readBinary: function (binary_name) {
     return new Promise((resolve, reject) => {
-      console.log('Sending request..');
+      console.log('Reading Binary..');
       const req = new XMLHttpRequest();
       req.open("GET", binary_name, true);
       req.responseType = "arraybuffer";
@@ -115,15 +115,16 @@ class StmDevice extends SerialDevice {
     let previous_handler = this.onDataCallback;
     try {
       let settings = { baudRate: 115200, parity: "even" };
-      await this.reopenPort(settings, null);
-      await sleep(1000);
-
+      await sleep(200);
+      
       console.log("Resetting Device...");
       await this.resetDevice();
-
+      
       console.log("Activating bootloader...");
       await this.activateBootloader();
-      await sleep(500);
+      await sleep(200);
+      
+      await this.reopenPort(settings, null);
 
       console.log("Retrieving device information...");
       await this.getDeviceInfo();
@@ -131,27 +132,27 @@ class StmDevice extends SerialDevice {
       console.log('Erasing flash...');
       await this.eraseFlash();
 
-      console.log('Reading binary...');
       var firmware = document.getElementById("firmware-select");
-      this.flashContent = await tools.readBinary(firmware.value);
-      let startAddress = parseInt("0x8000000");
+      if (firmware.value != 'erase')
+      {
+        this.flashContent = await tools.readBinary(firmware.value);
+        let startAddress = parseInt("0x8000000");
 
-      await this.writeBlocks(this.flashContent, startAddress, updateProgressBar);
-      console.log('STM Write complete.');
+        await this.writeBlocks(this.flashContent, startAddress, updateProgressBar);
+        console.log('STM Write complete.');
 
-      console.log('Starting code execution');
-      await this.goToAddress(startAddress);
-      await this.setSignals({
-        dataTerminalReady: false, // RESET HIGH
-        requestToSend: true, // return BOOT to LOW
-      });
-
+        console.log('Starting code execution');
+        await this.goToAddress(startAddress);
+        await this.setSignals({
+          dataTerminalReady: false, // RESET HIGH
+          requestToSend: true, // return BOOT to LOW
+        });
+      }
       console.log("Resetting Device...");
+      // double reset used to make sure device is ready to use when disconnected (needed for cmsis-dap bin)
       await this.resetDevice();
-      //TODO: do i need to reopen? if so do i need baud?
-      console.log("Reopening port...");
-      settings = { baudRate: 115200 };
-      await this.reopenPort(settings, previous_handler);
+      await sleep(200);
+      await this.resetDevice();
     }
     catch (error) {
       console.log(error);
@@ -334,6 +335,7 @@ class StmDevice extends SerialDevice {
         }
       }
       console.log('Finished writing');
+      await sleep(200);
     }
     catch (error) {
       console.log(error);
