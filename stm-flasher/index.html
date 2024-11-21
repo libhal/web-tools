@@ -48,9 +48,19 @@
     #logo {
       margin: auto;
       display: block;
-      width: 20rem;
+      width: 30%;
       animation: floating 7s infinite;
       animation-timing-function: ease-in-out;
+    }
+
+    #logo-shadow {
+      margin: auto;
+      display: block;
+      width: 15%;
+      height: 2%;
+      border-radius: 50%;
+      box-shadow: 0 0 30px 30px black;
+      background-color: black;
     }
 
     #connect-btn {
@@ -120,8 +130,8 @@
       <br>click "connect and flash", and select your device!
     </p>
     <br>
-    <div class="input-group" style="width: 50%; margin:auto">
-      <label for="firmware-select" id="firm-select-label" class="input-group-text">Firmware</label>
+    <div class="input-group" style="width: 70%; margin:auto">
+      <label for="firmware-select" id="firm-select-label" class="input-group-text" style="width: 15%">Firmware</label>
       <select class="form-select" id="firmware-select" class="form-select">
         <option value="../resources/binaries/DAP103-stlink.bin" selected="selected">CMSIS-DAP Debugger</option>
         <option value="../resources/binaries/mod-stm32f1-v4-Debug.bin">Can Opener</option>
@@ -137,6 +147,8 @@
   <br>
 
   <img src="../resources/images/libhal.png" alt="libhal" id="logo">
+  <br>
+  <span id="logo-shadow"></span>
 
   <div class="modal fade" tabindex="-1" id="program-modal" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog">
