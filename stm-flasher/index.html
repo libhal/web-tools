@@ -54,13 +54,16 @@
     }
 
     #logo-shadow {
+      padding-top: .5vw;
       margin: auto;
       display: block;
-      width: 15%;
-      height: 2%;
+      width: 15vw;
+      height: 1vw;
       border-radius: 50%;
-      box-shadow: 0 0 30px 30px black;
+      box-shadow: 0 0 1vw 1vw black;
       background-color: black;
+      animation: float-shadow 7s infinite;
+      animation-timing-function: ease-in-out;
     }
 
     #connect-btn {
@@ -115,6 +118,21 @@
         transform: translateY(-40px);
       }
     }
+
+
+    @keyframes float-shadow {
+      0% {
+        box-shadow: 0 0 1.7vw 1.7vw black;
+      }
+
+      50% {
+        box-shadow: 0 0 .5vw .9vw black;
+      }
+
+      100% {
+        box-shadow: 0 0 1.7vw 1.7vw black;
+      }
+    }
   </style>
 </head>
 
@@ -131,7 +149,8 @@
     </p>
     <br>
     <div class="input-group" style="width: 70%; margin:auto">
-      <label for="firmware-select" id="firm-select-label" class="input-group-text" style="width: 15%">Firmware</label>
+      <label for="firmware-select" id="firm-select-label" class="d-none d-md-block input-group-text"
+        style="width: 15%">Firmware</label>
       <select class="form-select" id="firmware-select" class="form-select">
         <option value="../resources/binaries/DAP103-stlink.bin" selected="selected">CMSIS-DAP Debugger</option>
         <option value="../resources/binaries/mod-stm32f1-v4-Debug.bin">Can Opener</option>
@@ -147,7 +166,6 @@
   <br>
 
   <img src="../resources/images/libhal.png" alt="libhal" id="logo">
-  <br>
   <span id="logo-shadow"></span>
 
   <div class="modal fade" tabindex="-1" id="program-modal" data-bs-backdrop="static" data-bs-keyboard="false">
