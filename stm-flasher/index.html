@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="author" content="libhal-org" />
+  <meta name="description" content="Flash libhal STM devices with specified firmware" />
+
+  <title>STM Web Flasher</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="STM Web Flasher" />
+  <meta property="og:description"
+    content="Flash STM devices with specific firmware. No need to install anything. Just open up this site in a chromium browser (or any other browser that supports WebSerial), select your device and firmware, and press the button." />
+  <meta property="og:image" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link href="../third_party/bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <style>
+    html {
+      height: 100%;
+    }
+
+    body {
+      background-attachment: fixed;
+      background-image: linear-gradient(white, #5a5e6e);
+      font-family: monospace;
+      height: 100%;
+
+    }
+
+    #welcome {
+      margin: auto;
+      width: 50%;
+      text-align: center;
+      animation: slideDown 2s;
+    }
+
+    #instructions {
+      margin: auto;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 2s;
+      transition-delay: 1.5s;
+    }
+
+
+    #logo {
+      margin: auto;
+      display: block;
+      width: 30%;
+      animation: floating 7s infinite;
+      animation-timing-function: ease-in-out;
+    }
+
+    #logo-shadow {
+      padding-top: .5vw;
+      margin: auto;
+      display: block;
+      width: 15vw;
+      height: 1vw;
+      border-radius: 50%;
+      box-shadow: 0 0 1vw 1vw black;
+      background-color: black;
+      animation: float-shadow 7s infinite;
+      animation-timing-function: ease-in-out;
+    }
+
+    #connect-btn {
+      margin: 0 auto;
+      display: block;
+      animation: pulse 4s infinite;
+      animation-delay: 3s;
+    }
+
+    @keyframes slideDown {
+      0% {
+        transform: translateY(-100px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0px);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      20% {
+        transform: scale(1);
+      }
+
+      80% {
+        transform: scale(.95);
+        box-shadow: 0 0 10px 10px lightgreen;
+      }
+
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 lightgreen;
+      }
+    }
+
+    @keyframes floating {
+      0% {
+        transform: translateY(-40px);
+      }
+
+      50% {
+        transform: translateY(0px);
+      }
+
+      100% {
+        transform: translateY(-40px);
+      }
+    }
+
+
+    @keyframes float-shadow {
+      0% {
+        box-shadow: 0 0 1.7vw 1.7vw black;
+      }
+
+      50% {
+        box-shadow: 0 0 .5vw .9vw black;
+      }
+
+      100% {
+        box-shadow: 0 0 1.7vw 1.7vw black;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a href="../index.html" title="Check out more libhal web tools!">
+    <button class="btn" style="font-size: xx-large; padding: 2%;"><i class="fa fa-home"></i></button>
+  </a>
+
+  <div>
+    <br>
+    <h1 id="welcome">Welcome to the libhal STM32 Web Flasher!</h1>
+    <br>
+  </div>
+
+  <div id="instructions">
+    <p>To get started, select the firmware,
+      <br>click "connect and flash", and select your device!
+    </p>
+    <br>
+    <div class="input-group" style="width: 70%; margin:auto">
+      <label for="firmware-select" id="firm-select-label" class="d-none d-md-block input-group-text"
+        style="width: 15%">Firmware</label>
+      <select class="form-select" id="firmware-select" class="form-select">
+        <option value="../resources/binaries/DAP103-stlink.bin" selected="selected">CMSIS-DAP Debugger</option>
+        <option value="../resources/binaries/mod-stm32f1-v4-Debug.bin">Can Opener</option>
+        <option value="erase">Erase Flash</option>
+      </select>
+    </div>
+    <br>
+    <button type="button" class="btn btn-success" id="connect-btn" data-bs-toggle="modal"
+      data-bs-target="#program-modal">💾 Connect and Flash 💾
+    </button>
+  </div>
+  <br>
+  <br>
+
+  <img src="../resources/images/libhal.png" alt="libhal" id="logo">
+  <span id="logo-shadow"></span>
+
+  <div class="modal fade" tabindex="-1" id="program-modal" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Programming STM Device...</h5>
+        </div>
+        <div class="modal-body">
+          <p id="program-status-message">Please select a device...</p>
+          <div class="progress" role="progressbar">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%"
+              id="flash-progress">
+              0%
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="close-programming-modal">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Bootstrap core JS-->
+  <script src="../third_party/bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Core theme JS-->
+  <script src="../resources/scripts/serial.js"></script>
+  <script src="../resources/scripts/stm.js"></script>
+  <script src="../resources/scripts/flasher-script.js"></script>
+  <script>
+    window.addEventListener("load", myInit, true);
+    function myInit() {
+      document.getElementById('welcome').style.opacity = '1';
+      document.getElementById('instructions').style.opacity = '1'
+    };
+  </script>
+</body>
+
+</html>

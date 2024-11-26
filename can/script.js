@@ -11,7 +11,7 @@ const binary_link = "./mod-stm32f1-v4-Debug.bin";
 
 const serial_can_message_regex =
   /([rRtT])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
-let can_message_buffer = "";
+let message_buffer = "";
 
 function updateTable(command) {
   const match = command.data.match(serial_can_message_regex);
@@ -63,19 +63,19 @@ async function handleReceivedData(data) {
 
   if (data.includes("\x07")) {
     console.error("Serial Can responded with an error response!");
-    can_message_buffer = "";
+    message_buffer = "";
     return;
   }
 
-  can_message_buffer += data;
-  let end_of_command = can_message_buffer.indexOf("\r");
+  message_buffer += data;
+  let end_of_command = message_buffer.indexOf("\r");
 
   // Keep parsing out data until the message buffer is empty
   while (end_of_command != -1) {
-    let current_command = can_message_buffer.substring(0, end_of_command + 1);
-    can_message_buffer = can_message_buffer.substring(end_of_command + 2);
+    let current_command = message_buffer.substring(0, end_of_command + 1);
+    message_buffer = message_buffer.substring(end_of_command + 2);
     updateTable({ data: current_command, outgoing: false });
-    end_of_command = can_message_buffer.indexOf("\r");
+    end_of_command = message_buffer.indexOf("\r");
   }
 }
 
