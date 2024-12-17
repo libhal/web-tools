@@ -9,12 +9,21 @@ async function sleep(ms) {
 const uptime_start = Date.now();
 const binary_link = "./mod-stm32f1-v4-Debug.bin";
 
-const serial_can_message_regex =
-  /([rRtT])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
-let message_buffer = "";
+const serial_can_standard_message_regex =
+  /([rt])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
+const serial_can_extended_message_regex =
+  /([RT])([0-9A-Fa-f]{8})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
+let can_message_buffer = "";
 
 function updateTable(command) {
-  const match = command.data.match(serial_can_message_regex);
+  let match;
+
+  if (command.data[0] == "r" || command.data[0] == "t") {
+    match = command.data.match(serial_can_standard_message_regex);
+  } else {
+    match = command.data.match(serial_can_extended_message_regex);
+  }
+
   if (match) {
     console.log("Full match: ", match[0]);
     console.log("Type: ", match[1]);
@@ -63,19 +72,19 @@ async function handleReceivedData(data) {
 
   if (data.includes("\x07")) {
     console.error("Serial Can responded with an error response!");
-    message_buffer = "";
+    can_message_buffer = "";
     return;
   }
 
-  message_buffer += data;
-  let end_of_command = message_buffer.indexOf("\r");
+  can_message_buffer += data;
+  let end_of_command = can_message_buffer.indexOf("\r");
 
   // Keep parsing out data until the message buffer is empty
   while (end_of_command != -1) {
-    let current_command = message_buffer.substring(0, end_of_command + 1);
-    message_buffer = message_buffer.substring(end_of_command + 2);
+    let current_command = can_message_buffer.substring(0, end_of_command + 1);
+    can_message_buffer = can_message_buffer.substring(end_of_command + 2);
     updateTable({ data: current_command, outgoing: false });
-    end_of_command = message_buffer.indexOf("\r");
+    end_of_command = can_message_buffer.indexOf("\r");
   }
 }
 
@@ -116,7 +125,27 @@ async function sendCanMessage() {
     return;
   }
 
-  let payload = "t" + message_id.toString(16).padStart(3, "0") + length;
+  const extended = document.querySelector("#extended_id").checked;
+  const remote_frame = document.querySelector("#remote_frame").checked;
+  const letter_map = [
+    // [0] = data [1] = remote_frame
+    ["t", "r"], // extended == false
+    ["T", "R"], // extended == true
+  ];
+  const selected_letter = letter_map[Number(extended)][Number(remote_frame)];
+
+  console.log("extended = ", extended);
+  console.log("remote_frame = ", remote_frame);
+  console.log("selected letter = ", selected_letter);
+
+  let payload = selected_letter;
+  if (extended) {
+    payload += message_id.toString(16).padStart(8, "0");
+  } else {
+    payload += message_id.toString(16).padStart(3, "0");
+  }
+  payload += length;
+
   for (let i = 0; i < data.length; i++) {
     payload += data[i].toString(16).padStart(2, "0");
   }
@@ -127,6 +156,24 @@ async function sendCanMessage() {
   await serialDevice.write(payload);
 
   updateTable({ data: payload, outgoing: true });
+}
+
+async function sendCodeFilter() {
+  if (!serialDevice.isConnected()) {
+    return;
+  }
+  let code_payload = "M4400000\r";
+  console.log("sending code_payload...", code_payload);
+  await serialDevice.write(code_payload);
+}
+
+async function sendMaskFilter() {
+  if (!serialDevice.isConnected()) {
+    return;
+  }
+  let mask_payload = "m7c00000\r";
+  console.log("sending mask_payload...", mask_payload);
+  await serialDevice.write(mask_payload);
 }
 
 /**
@@ -152,9 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const close_button = document.querySelector("#close-programming-modal");
       close_button.setAttribute("disabled", true);
       close_button.classList.replace("btn-primary", "btn-secondary");
-      document.querySelector(
-        "#program-status-message"
-      ).innerText = 'Flashing latest firmware. Please wait...';
+      document.querySelector("#program-status-message").innerText =
+        "Flashing latest firmware. Please wait...";
       document.querySelector("#connect-btn").innerText = "Disconnect";
       document
         .querySelector("#connect-btn")
@@ -193,6 +239,15 @@ document.addEventListener("DOMContentLoaded", () => {
       await serialDevice.write(`${can_bit_rate}\r`);
       await sleep(50);
 
+      if (0) {
+        // This is here for debugging purposes. Remove later
+        await sendCodeFilter();
+        await sleep(50);
+
+        await sendMaskFilter();
+        await sleep(50);
+      }
+
       console.log("sending O");
       await serialDevice.write("O\r");
       await sleep(50);
@@ -214,9 +269,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (serialDevice.error) {
       const close_button = document.querySelector("#close-programming-modal");
-      document.querySelector(
-        "#program-status-message"
-      ).innerText = serialDevice.error;
+      document.querySelector("#program-status-message").innerText =
+        serialDevice.error;
       close_button.removeAttribute("disabled");
       close_button.classList.replace("btn-secondary", "btn-primary");
     }
@@ -298,29 +352,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#upgrade").addEventListener("click", async () => {
     const close_button = document.querySelector("#close-programming-modal");
-    const flash_status = document.querySelector(
-      "#program-status-message"
-    );
+    const flash_status = document.querySelector("#program-status-message");
     close_button.setAttribute("disabled", true);
 
     await serialDevice.flash(updateProgressBar);
     if (serialDevice.isConnected()) {
-      flash_status.innerText = "Flash complete! Close to start using CanOpener!";
+      flash_status.innerText =
+        "Flash complete! Close to start using CanOpener!";
       close_button.removeAttribute("disabled");
       close_button.classList.replace("btn-secondary", "btn-primary");
     }
   });
 
-  document.querySelector("#close-programming-modal").addEventListener("click", async () => {
-    try {
-      if (serialDevice.isConnected()) {
-        await sleep(300);
-        await serialDevice.onConnectCallback();
+  document
+    .querySelector("#close-programming-modal")
+    .addEventListener("click", async () => {
+      try {
+        if (serialDevice.isConnected()) {
+          await sleep(300);
+          await serialDevice.onConnectCallback();
+        }
+      } catch (error) {
+        await serialDevice.disconnect();
       }
-    }
-    catch (error) {
-      await serialDevice.disconnect();
-    }
-  }
-  )
+    });
 });
