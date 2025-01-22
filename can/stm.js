@@ -49,7 +49,7 @@ const tools = {
     return new Promise((resolve, reject) => {
       console.log('Sending request..');
       const req = new XMLHttpRequest();
-      req.open("GET", "./mod-stm32f1-v4-Debug.bin", true);
+      req.open("GET", "../resources/binaries/mod-stm32f1-v5-Debug.bin", true);
       req.responseType = "arraybuffer";
       req.onload = (event) => {
         const arrayBuffer = req.response;

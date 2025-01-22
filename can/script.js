@@ -7,7 +7,7 @@ async function sleep(ms) {
 }
 
 const uptime_start = Date.now();
-const binary_link = "./mod-stm32f1-v4-Debug.bin";
+const binary_link = "../resources/binaries/mod-stm32f1-v5-Debug.bin";
 
 const serial_can_standard_message_regex =
   /([rt])([0-9A-Fa-f]{3})([0-8])(([0-9A-Fa-f]{2}){0,8})/i;
