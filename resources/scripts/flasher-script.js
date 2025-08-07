@@ -50,7 +50,6 @@ function resetModal() {
   document.querySelector(
     "#program-status-message"
   ).innerText = 'Please select a device...';
-  
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -84,9 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       await serialDevice.flash(updateProgressBar);
       if (serialDevice.isConnected()) {
-        document.querySelector("#flash-progress").style.width='0%';
+        document.querySelector("#flash-progress").style.width = '0%';
         await sleep(200);
-        
+
         close_button.removeAttribute("disabled");
         close_button.classList.replace("btn-secondary", "btn-primary");
         serialDevice.disconnect();
@@ -110,7 +109,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.querySelector("#connect-btn").addEventListener("click", async () => {
+  document.getElementById("connect-btn").addEventListener("click", async () => {
+    var firmware_type = document.getElementById("firmware-select");
+    if (firmware_type.value != "../resources/binaries/DAP103-stlink.bin") {
+      if (!serialDevice.isConnected()) {
+        serialDevice.connect();
+      } else {
+        serialDevice.disconnect();
+      }
+    }
+  });
+
+  document.getElementById("firmware-select").addEventListener("change", () => {
+    var firmware_type = document.getElementById("firmware-select");
+    if (firmware_type.value == "../resources/binaries/DAP103-stlink.bin") {
+      document.getElementById("connect-btn").setAttribute("data-bs-target", "#license-modal");
+    }
+    else {
+      document.getElementById("connect-btn").setAttribute("data-bs-target", "#program-modal");
+    }
+  });
+
+  document.querySelector("#close-programming-modal").addEventListener("click", async () => {
+    resetModal();
+  });
+
+  document.getElementById("agree-button").addEventListener("click", async () => {
     if (!serialDevice.isConnected()) {
       serialDevice.connect();
     } else {
@@ -118,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.querySelector("#close-programming-modal").addEventListener("click", async () => {
-    resetModal();
+  document.getElementById("disagree-button").addEventListener("click", async () => {
+    throw new Error("Please agree to license agreement to use CMSIS-DAP firmware.");
   });
 });
