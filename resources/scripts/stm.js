@@ -114,16 +114,17 @@ class StmDevice extends SerialDevice {
   async flash(updateProgressBar) {
     let previous_handler = this.onDataCallback;
     try {
+
       let settings = { baudRate: 115200, parity: "even" };
       await sleep(200);
-      
+
       console.log("Resetting Device...");
       await this.resetDevice();
-      
+
       console.log("Activating bootloader...");
       await this.activateBootloader();
       await sleep(200);
-      
+
       await this.reopenPort(settings, null);
 
       console.log("Retrieving device information...");
@@ -135,15 +136,14 @@ class StmDevice extends SerialDevice {
       const modalText = document.querySelector("#program-status-message");
 
       var firmware = document.getElementById("firmware-select");
-      if (firmware.value == 'erase')
-      {
+      if (firmware.value == 'erase') {
         modalText.innerText = "Flash memory erased!";
       }
       else {
         modalText.innerText = "Flashing latest firmware. Please wait...";
         this.flashContent = await tools.readBinary(firmware.value);
         let startAddress = parseInt("0x8000000");
-        
+
         await this.writeBlocks(this.flashContent, startAddress, updateProgressBar);
         console.log('STM Write complete, Starting code execution');
         await this.goToAddress(startAddress);
@@ -307,7 +307,7 @@ class StmDevice extends SerialDevice {
       }
       for (let i = 0; i < blocks.length; i++) {
         let block = blocks[i];
-        console.log('Writing block ' + (i + 1) + '/' + blocksCount); 
+        console.log('Writing block ' + (i + 1) + '/' + blocksCount);
         if (onProgress) {
           onProgress((i + 1) / blocksCount);
         }
@@ -326,13 +326,13 @@ class StmDevice extends SerialDevice {
           console.log(response);
           throw new Error('Unexpected response sending WRITE');
         }
-        
+
         await this.writer.write(tools.u8Array(addressFrame));
         response = await this.read(1, 200);
         if (response[0] !== ACK) {
           throw new Error('Unexpected response writing addressframe');
         }
-        
+
         await this.writer.write(frame);
         response = await this.read(1, 300);
         if (response[0] !== ACK) {
