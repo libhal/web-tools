@@ -327,6 +327,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#transmit").addEventListener("click", sendCanMessage);
 
+  document.querySelector("#clear-output").addEventListener("click", () => {
+    document.querySelector("#output_table_body").innerHTML = "";
+  });
+
   const inputs = [
     "#message_id",
     "#length",
