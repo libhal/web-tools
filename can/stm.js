@@ -116,14 +116,16 @@ class StmDevice extends SerialDevice {
     try {
       let settings = { baudRate: this.baudRateSource(), parity: "even" };
       await this.reopenPort(settings, null);
-      await sleep(1000);
+      await sleep(200);
 
       console.log("Resetting Device...");
       await this.resetDevice();
 
       console.log("Activating bootloader...");
       await this.activateBootloader();
-      await sleep(500);
+      await sleep(200);
+
+      await this.reopenPort(settings, null);
 
       console.log("Retrieving device information...");
       await this.getDeviceInfo();
